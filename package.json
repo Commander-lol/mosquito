@@ -15,5 +15,13 @@
     "HOC"
   ],
   "author": "Louis Capitanchik <contact@louiscap.co>",
-  "license": "BSD-3-Clause"
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Commander-lol/mosquito.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Commander-lol/mosquito/issues"
+  },
+  "homepage": "https://github.com/Commander-lol/mosquito#readme"
 }

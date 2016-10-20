@@ -1,6 +1,2 @@
-// @flow
-import Container from './internals/Container'
-
-export default Container
-
-export Injectable from './internals/Injectable'
+export Container from './internals/Container'
+export ServiceProvider from './internals/ServiceProvider'

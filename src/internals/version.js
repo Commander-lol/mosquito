@@ -1,2 +1,1 @@
-// @flow
-require('pkginfo')(module)
+module.exports = {version: 'v0.0.1'}

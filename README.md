@@ -56,3 +56,27 @@ helper | takes | provides
 `#object` | Any object | The passed in object
 `#copyOf` | Any object | A copy of the passed in object, created with `lodash.deepclone`
 `#resultOf` | A function | The return value of invoking the given function, which is invoked when a dependee is instantiated
+
+An example of registering a singleton class and, essentially, an app-level constant:
+
+```js
+	app.when('MyRepo').singleton(MyRepoImplementation)
+	app.when('ThatStringINeed').object('This is that string')
+})
+```
+
+The `ServiceProvider` can also be used to create injected classes that won't be provided by the container - for example, provided by a framework. This is done through the static `provide` method, which intercepts the constructor and provides the dependancies to the class.
+
+```js
+const Foo = ServiceProvider.provide(class Bar {
+	constructor(MyRepo) {
+		this.MyRepo = MyRepo
+	}
+	
+	func() {
+		console.log(this.MyRepo)
+	}
+})
+
+new Foo // contains an instance of MyRepoImplementation as declared in the provider
+```

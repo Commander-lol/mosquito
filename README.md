@@ -1,10 +1,19 @@
 # Mosquito
 
-(( This is where the cool picture goes ))
+(( These docs are still being written, if there's anything you need to know as a priority, open an issue and I'll get right on it ))
 
 Dependency Injection that doesn't need any fanagle or weirdness. Simply put: Define what the container should provide when a constructor declares a certain parameter, and...well, that's it really.
 
 Supports Node 6+ and LTS
+
+## Installation
+
+Now that you know everything you need to know about mosquito, you can install it and get started. Pretty simple through npm:
+
+```
+npm i --save mosquito
+```
+or your favourite alternative installation method such as `ied install -S mosquito` or `yarn add mosquito`
 
 ## Usage
 
@@ -43,10 +52,6 @@ const provider = new ServiceProvider
 
 This provides the contract for easily registering dependancies with the container. To kick start the process, you'll need to call the `#register` method, and provide it with a function that accepts a `ProviderBuilder`
 
-```js
-provider.register((app) => {
-```
-
 The provider builder itself only exposes one method, `with`, which defines the name of the dependancy. It then returns a set of helpers, each of which provides a different type of object when the dependancy is resolved.
 
 helper | takes | provides
@@ -60,6 +65,7 @@ helper | takes | provides
 An example of registering a singleton class and, essentially, an app-level constant:
 
 ```js
+provider.register((app) => {
 	app.when('MyRepo').singleton(MyRepoImplementation)
 	app.when('ThatStringINeed').object('This is that string')
 })

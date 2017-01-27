@@ -1,2 +1,2 @@
 export Container from './internals/Container'
-export ServiceProvider from './internals/ServiceProvider'
+export { ServiceProvider } from './internals/ServiceProvider'

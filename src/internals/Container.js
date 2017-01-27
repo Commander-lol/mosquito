@@ -5,12 +5,15 @@ import { version } from './version'
 import type { Provider } from './Container.types'
 
 const cloneDeep = require('lodash.clonedeep')
+const uuid = require('node-uuid')
 
 const containerSymbolName = `mosquito-container-${version}`
 const ContainerSymbol = Symbol.for(containerSymbolName)
 
 const cacheSymbolName = `mosquito-cache-${version}`
 const CacheSymbol = Symbol.for(cacheSymbolName)
+
+import { ServiceProvider } from './ServiceProvider'
 
 function getCache() {
 	if (global[CacheSymbol] == null) {
@@ -58,24 +61,36 @@ function resolveLibrary(descriptor: Provider) {
 class Container {
 	resolutions: Map<string, Provider>
 	whitelist: string[]
+	contexts: Map<string, Container>
+
+	constructor() {
+		this.resolutions = new Map()
+		this.whitelist = []
+		this.contexts = new Map()
+	}
 
 	get cache() {
 		return getCache()
 	}
 
 	getInjectionProxy(injectables) {
-		const container = this
+		let container = this
 		return {
-			construct(target, params) {
-				const injections = injectables.map(container.make)
+			get(target, prop) {
+				if (prop === '$$_Mosquito') {
+					return true
+				} else {
+					return Reflect.get(target, prop)
+				}
+			},
+			construct: (function(container, target, params) {
+				if (target.$$_Run_In_Instantiated_Context) {
+					container = container.getContextualised(target.$$_Run_In_Instantiated_Context)
+				}
+				const injections = injectables.map(container.make.bind(container))
 				return new target(...(params.concat(injections)))
-			}
+			}).bind(null, container)
 		}
-	}
-
-	constructor() {
-		this.resolutions = new Map()
-		this.whitelist = []
 	}
 
 	get make() {
@@ -111,6 +126,36 @@ class Container {
 
 	register(key, provider) {
 		this.resolutions.set(key, provider)
+	}
+
+	clone() {
+		const newContainer = new Container()
+		newContainer.resolutions = new Map(this.resolutions)
+		newContainer.whitelist = Array.from(this.whitelist)
+		newContainer.contexts = new Map(this.contexts)
+
+		return newContainer
+	}
+
+	getContextualised(id) {
+		return this.contexts.get(id)
+	}
+
+	resolveInContext(clazz, bindings, run) {
+		const contextId = uuid.v4()
+		clazz.$$_Run_In_Instantiated_Context = contextId
+
+		let newContext = this.clone()
+		let contextProvider = new ServiceProvider()
+		this.contexts.set(contextId, newContext)
+		contextProvider.registerWith(newContext, bindings)
+
+		run()
+
+		delete clazz.$$_Run_In_Instantiated_Context
+		this.contexts.delete(contextId)
+		newContext = null
+		contextProvider = null
 	}
 }
 

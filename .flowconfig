@@ -9,3 +9,4 @@ node_modules
 esproposal.class_instance_fields=enable
 esproposal.class_static_fields=enable
 suppress_comment=\\(.\\|\n\\)*\\$FlowFixMe
+unsafe.enable_getters_and_setters=true

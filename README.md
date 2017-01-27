@@ -1,5 +1,7 @@
 # Mosquito
 
+**This README is not up to date with the latest changes to Mosquito - check the [`babylon`](https://github.com/Commander-lol/mosquito/tree/babylon) branch for info about v0.2.0**
+
 (( These docs are still being written, if there's anything you need to know as a priority, open an issue and I'll get right on it ))
 
 Dependency Injection that doesn't need any fanagle or weirdness. Simply put: Define what the container should provide when a constructor declares a certain parameter, and...well, that's it really.

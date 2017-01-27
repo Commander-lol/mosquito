@@ -11,3 +11,5 @@ fix:
 
 flow:
 	@$(BIN)/flow src
+
+qa: lint flow

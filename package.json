@@ -4,8 +4,7 @@
   "description": "Dependency Injection that just works",
   "main": "lib/index.js",
   "scripts": {
-    "start": "node lib/index.js",
-    "test": "make test",
+    "test": "make qa",
     "prepublish": "make build"
   },
   "keywords": [
@@ -31,6 +30,7 @@
     "babel-core": "^6.13.2",
     "babel-eslint": "^6.1.2",
     "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.16.0",
     "babel-plugin-transform-flow-strip-types": "^6.14.0",
     "babel-preset-stage-0": "^6.5.0",
     "chai": "^3.5.0",

@@ -1,5 +1,7 @@
 # Mosquito
 
+*This branch will become the new main branch once it starts passing builds - keep up to date on progresss on [the pr](https://github.com/Commander-lol/mosquito/pull/1)*
+
 (( These docs are still being written, if there's anything you need to know as a priority, open an issue and I'll get right on it ))
 
 Dependency Injection that doesn't need any fanagle or weirdness. Simply put: Define what the container should provide when a constructor declares a certain parameter, and...well, that's it really.

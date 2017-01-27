@@ -16,7 +16,7 @@ function wrapClassDeclaration(name, clazzDec, replacements) {
 const original = Module._extensions['.js']
 
 Module._extensions['.js'] = function(module, filename) {
-	if (filename.includes('node_modules') && Container.whitelist.every(entry => !filename.includes(entry))) {
+	if (filename.includes('node_modules') && Container.whitelist.every(entry => !filename.includes(entry))) { // eslint-disable-line no-undef
 		original(module, filename)
 	} else {
 		const file = fs.read(filename, 'utf-8')

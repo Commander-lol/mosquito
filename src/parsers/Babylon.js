@@ -7,11 +7,7 @@ import { transform } from 'babel-core'
 
 import * as util from './util'
 
-import type {
-	BabelNode,
-	ClassNode,
-	BabelProgram,
-} from './parser.flow'
+import type { BabelNode, BabelProgram } from './parser.flow'
 
 import type { PossibleClassDeclaration } from './util'
 

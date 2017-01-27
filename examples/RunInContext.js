@@ -1,5 +1,5 @@
 /* eslint-disable no-console, no-undef */
-const { ServiceProvider } = require('./lib')
+const { ServiceProvider } = require('../lib/index')
 const provider = new ServiceProvider()
 
 provider.register(app => {

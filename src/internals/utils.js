@@ -1,6 +1,6 @@
 // @flow
 
-import esprima from 'esprima'
+import estraverse from 'estraverse'
 
 export function getClassDeclaration(clazz: Class<*>) {
 	const src = clazz.prototype.constructor.toString()
@@ -12,4 +12,15 @@ export function getConstructorTree(clazz: Class<*>) {
 	const dec = getClassDeclaration(clazz)[0].body.body
 	const constructor = dec.filter(i => i.type === 'MethodDefinition' && i.kind === 'constructor')[0]
 	return constructor
+}
+
+const replacements = {
+	'ClassMethod': 'MethodDefinition',
+	'ObjectProperty': 'Property',
+	'ObjectMethod': 'Property',
+	'StringLiteral': 'Literal',
+	'NumericLiteral': 'Literal',
+	'BooleanLiteral': 'Literal',
+	'NullLiteral': 'Literal',
+	'RegExpLiteral': 'Literal',
 }

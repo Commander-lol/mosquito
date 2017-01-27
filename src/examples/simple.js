@@ -2,7 +2,7 @@ const { ServiceProvider } = require('./../../lib')
 const provider = new ServiceProvider
 
 class MyRepoImplementation {
-	constructor(ThatStringINeed) {
+	constructor(ThatStringINeed: string) {
 		this.myStringThing = ThatStringINeed
 	}
 }
@@ -12,8 +12,8 @@ provider.register((app) => {
 	app.when('ThatStringINeed').object('This is that string')
 })
 
-class UnrelatedClass {
-	constructor(MyRepo) {
+export class UnrelatedClass {
+	constructor(MyRepo: MyRepoImplementation) {
 		this.MyRepo = MyRepo
 	}
 
@@ -25,3 +25,5 @@ class UnrelatedClass {
 const ExportedClass = ServiceProvider.provide(UnrelatedClass)
 
 new ExportedClass().logThing()
+
+export default MyRepoImplementation

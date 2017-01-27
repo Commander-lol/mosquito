@@ -51,23 +51,62 @@ function resolveFunction(descriptor: Provider) {
 	return descriptor.resolver()
 }
 
+function resolveLibrary(descriptor: Provider) {
+	return require(descriptor.resolver)
+}
+
 class Container {
 	resolutions: Map<string, Provider>
+	whitelist: string[]
+
+	get cache() {
+		return getCache()
+	}
+
+	getInjectionProxy(injectables) {
+		const container = this
+		return {
+			construct(target, params) {
+				const injections = injectables.map(container.make)
+				return new target(...(params.concat(injections)))
+			}
+		}
+	}
 
 	constructor() {
 		this.resolutions = new Map()
+		this.whitelist = []
 	}
 
-	make = (ident: string) => {
-		const resolution = this.resolutions.get(ident)
-		if (resolution == null) throw new TypeError(`Cannot make undefined object ${ident}`)
-		if (resolution.type === 'class') {
-			return resolveClass(resolution, this)
-		} else if (resolution.type === 'function') {
-			return resolveFunction(resolution, this)
-		} else {
-			return resolveObject(resolution, this)
+	get make() {
+		return (ident: string) => {
+			const resolution = this.resolutions.get(ident)
+			if (resolution == null) {
+				try {
+					const module = require(ident)
+					return module
+				} catch (e) {
+					if (e.message.startsWith('Cannot find module')) {
+						throw new TypeError(`Cannot make undefined object ${ident}. If this is a local class, it needs to be bound by a provider. If this is a library injection, it may not be installed - check your package.json file.`)
+					} else {
+						throw e
+					}
+				}
+			}
+			if (resolution.type === 'class') {
+				return resolveClass(resolution, this)
+			} else if (resolution.type === 'function') {
+				return resolveFunction(resolution, this)
+			} else if (resolution.type === 'require') {
+				return resolveLibrary(resolution, this)
+			} else {
+				return resolveObject(resolution, this)
+			}
 		}
+	}
+
+	allow(module: string) {
+		this.whitelist = Array.from(new Set(this.whitelist.concat(module)))
 	}
 
 	register(key, provider) {
@@ -78,5 +117,11 @@ class Container {
 if (global[ContainerSymbol] == null) {
 	global[ContainerSymbol] = new Container
 }
+
+if (!global.Container) {
+	Object.defineProperty(global, 'Container', { value: global[ContainerSymbol], enumerable: false, writable: false })
+}
+
+require('./modules')
 
 export default global[ContainerSymbol]

@@ -57,6 +57,11 @@ class ProviderBuilder {
 				strategy: 'call',
 				resolver: fn,
 			}),
+			library: ident => Container.register(name, {
+				type: 'require',
+				strategy: 'require',
+				resolver: ident,
+			})
 		}
 	}
 }

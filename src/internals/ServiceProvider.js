@@ -2,26 +2,14 @@
 import Container from './Container'
 import * as utils from './utils'
 
-function getParamList(clazz) {
-	const dec = utils.getConstructorTree(clazz)
-	return dec.value.params.map(param => param.name)
-}
-
 function getClassName(clazz) {
 	const dec = utils.getClassDeclaration(clazz)[0]
 	return dec.id.name
 }
 
-function constructorTrap() {
-	return {
-		construct(target, params) {
-			const deps = getParamList(target).map(Container.make)
-			return new target(...(params.concat(deps)))
-		}
-	}
-}
-
 class ProviderBuilder {
+	container: Container
+
 	constructor(container: typeof Container = Container) {
 		this.container = container
 	}
@@ -35,7 +23,6 @@ class ProviderBuilder {
 				resolver: clazz,
 				meta: {
 					name: getClassName(clazz),
-					params: getParamList(clazz)
 				},
 			}),
 			instanceOf: clazz => provider.container.register(name, {
@@ -44,7 +31,6 @@ class ProviderBuilder {
 				resolver: clazz,
 				meta: {
 					name: getClassName(clazz),
-					params: getParamList(clazz)
 				},
 			}),
 			object: obj => provider.container.register(name, {
@@ -72,7 +58,6 @@ class ProviderBuilder {
 }
 
 export class ServiceProvider {
-	static provide = clazz => new Proxy(clazz, constructorTrap())
 	register = (fn: (app: ProviderBuilder) => void) => fn(new ProviderBuilder())
 	registerWith = (container: typeof Container, fn: (app: ProviderBuilder) => void) => fn(new ProviderBuilder(container))
 }

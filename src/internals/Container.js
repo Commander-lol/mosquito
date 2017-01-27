@@ -22,23 +22,22 @@ function getCache() {
 	return global[CacheSymbol]
 }
 
-function createClass(descriptor: Provider, container: Container) {
-	const params = descriptor.meta.params.map(p => container.make(p))
-	return new (descriptor.resolver)(...params)
+function createClass(descriptor: Provider) {
+	return new (descriptor.resolver)()
 }
 
-function resolveClass(descriptor: Provider, container: Container) {
+function resolveClass(descriptor: Provider) {
 	if (descriptor.strategy === 'singleton') {
 		const cache = getCache()
 		if (cache.has(descriptor.meta.name)) {
 			return cache.get(descriptor.meta.name)
 		} else {
-			const instance = createClass(descriptor, container)
+			const instance = createClass(descriptor)
 			cache.set(descriptor.meta.name, instance)
 			return instance
 		}
 	} else {
-		return createClass(descriptor, container)
+		return createClass(descriptor)
 	}
 }
 
@@ -74,7 +73,7 @@ class Container {
 	}
 
 	getInjectionProxy(injectables) {
-		let container = this
+		let context = this
 		return {
 			get(target, prop) {
 				if (prop === '$$_Mosquito') {
@@ -83,13 +82,15 @@ class Container {
 					return Reflect.get(target, prop)
 				}
 			},
-			construct: (function(container, target, params) {
+			construct: (function(boundContainer: Container, target, params) {
+				let container = boundContainer
 				if (target.$$_Run_In_Instantiated_Context) {
-					container = container.getContextualised(target.$$_Run_In_Instantiated_Context)
+					container = container.getContextualised(((target.$$_Run_In_Instantiated_Context: any): string))
+					if (container == null) container = boundContainer // revert that shit
 				}
 				const injections = injectables.map(container.make.bind(container))
 				return new target(...(params.concat(injections)))
-			}).bind(null, container)
+			}).bind(null, context)
 		}
 	}
 
@@ -137,7 +138,7 @@ class Container {
 		return newContainer
 	}
 
-	getContextualised(id) {
+	getContextualised(id: string): ?Container {
 		return this.contexts.get(id)
 	}
 

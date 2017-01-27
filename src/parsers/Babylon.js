@@ -7,15 +7,31 @@ import { transform } from 'babel-core'
 
 import * as util from './util'
 
-type Options = {
+import type {
+	BabelNode,
+	ClassNode,
+	BabelProgram,
+} from './parser.flow'
 
+import type { PossibleClassDeclaration } from './util'
+
+type Options = {
+	filename?: string,
+	plugins?: string[],
+}
+
+type ParamList = Array<?string>
+
+type Replacements = {
+	ClassExpression(src: string, injectables: ParamList): string,
+	ClassDeclaration(name: string, src: string, injectables: ParamList): string,
 }
 
 export class BabylonParser {
 	source: string
 	options: Options = {}
-	cachedTree = null
-	cachedBody = null
+	cachedTree: ?BabelNode = null
+	cachedBody: ?BabelProgram = null
 
 	constructor(str: string, opts: Options = {}) {
 		this.source = str
@@ -32,68 +48,45 @@ export class BabylonParser {
 		}
 	}
 
-	get tree() {
+	get tree(): BabelNode {
 		if (this.cachedTree == null) {
 			this.createCachedTree()
 		}
+		if (this.cachedTree == null) throw new Error('Parse tree was undefined after assignment')
 		return this.cachedTree
 	}
 
 	createCachedTree() {
 		if (this.cachedTree != null) return
 		this.cachedBody = parse(this.source, this.options)
-		global.CachedBodies = global.CachedBodies || {}
-		global.CachedBodies[this.options.filename] = this.cachedBody
 		this.cachedTree = this.cachedBody.program
 	}
 
-	getExportedClasses() {
-		const exports = []
+	getExportedClasses(): PossibleClassDeclaration[] {
 		const declarations = []
 
-		this.tree.body.forEach(node => {
-			if (util.identIsExport(node.type)) {
-				exports.push(node)
-			} else {
-				for (const dec of util.searchDeclarations(node)) {
-					declarations.push(dec)
-				}
+		this.tree.body && this.tree.body.forEach(node => {
+			for (const dec of util.searchDeclarations(node)) {
+				declarations.push(dec)
 			}
 		})
 
 		return declarations
 	}
 
-	getCleanSource() {
-		const vars = this.getExportedClasses()
-		let copy = String(this.source)
-		const classes = vars.map(util.getClassFromDeclaration).filter(b => b != null)
-		global.FoundVars = (global.FoundVars || []).concat(classes)
-		for (const clazz of classes) {
-			const types = util.getConstructorParamsFromClassDeclaration(clazz)
-			const skip = util.paramListCantInject(types)
-			if (!skip) {
-				types.forEach(type => {
-					const start = copy.substring(0, type.start)
-					const end = copy.substring(type.end)
-					const middle = ' '.repeat(type.end - type.start)
-					copy = start + middle + end
-				})
-			}
-		}
-		return copy
-	}
-
-	transform(replacers) {
+	transform(replacers: Replacements): string {
 		const possibleDeclarations = this.getExportedClasses()
 		const classes = possibleDeclarations.map(util.getClassFromDeclaration).filter(b => b != null)
 		let copy = String(this.source)
-		classes.sort((a, b) => a.start < b.start ? 1 : -1).forEach(clazz => {
+		classes.sort((a, b) => (a == null || b == null) ? 0 : (a.start < b.start ? 1 : -1)).forEach(clazz => {
+			if (clazz == null) return // These are already filtered out, but flow wants this for piece of mind
 			const params = util.getConstructorParamsFromClassDeclaration(clazz)
+			if (params == null) return
 			const skip = util.paramListCantInject(params)
 			if (!skip) {
-				const injectables = params.map(param => param.typeAnnotation.id.name)
+				const injectables = params.map(param => (param && param.typeAnnotation) ? param.typeAnnotation.id.name : null)
 				const name = clazz.id ? clazz.id.name : null
+				if (name == null) return // Don't attempt to hijack anonymous classes
 				let replacement = ''
 				const classCode = generate(clazz).code
 				if (clazz.type === 'ClassExpression') {

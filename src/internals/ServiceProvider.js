@@ -1,6 +1,7 @@
 // @flow
 import Container from './Container'
 import * as utils from './utils'
+import type { Provider } from './Container.types'
 
 function getClassName(clazz) {
 	const dec = utils.getClassDeclaration(clazz)[0]
@@ -14,7 +15,7 @@ class ProviderBuilder {
 		this.container = container
 	}
 
-	when = name => {
+	when = (name: string): ServiceProviderBuilder => {
 		const provider = this
 		return {
 			singleton: clazz => provider.container.register(name, {
@@ -57,9 +58,22 @@ class ProviderBuilder {
 	}
 }
 
+type Builder<T> = (param: T) => Provider
+
+export type ServiceProviderBuilder = {
+	singleton: Builder<Class<*>>,
+	instanceOf: Builder<Class<*>>,
+	object: Builder<any>,
+	copyOf: Builder<Object>,
+	resultOf: Builder<Function>,
+	library: Builder<string>,
+}
+
+export type BuilderFunction = (app: ProviderBuilder) => void
+
 export class ServiceProvider {
-	register = (fn: (app: ProviderBuilder) => void) => fn(new ProviderBuilder())
-	registerWith = (container: typeof Container, fn: (app: ProviderBuilder) => void) => fn(new ProviderBuilder(container))
+	register = (fn: BuilderFunction) => fn(new ProviderBuilder())
+	registerWith = (container: typeof Container, fn: BuilderFunction) => fn(new ProviderBuilder(container))
 }
 
 // export default ServiceProvider

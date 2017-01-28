@@ -12,4 +12,9 @@ fix:
 flow:
 	@$(BIN)/flow src
 
-qa: lint flow
+test:
+	$(BIN)/mocha
+
+qa: lint flow build test
+
+.PHONY: test

@@ -13,9 +13,12 @@ const ContainerSymbol = Symbol.for(containerSymbolName)
 const cacheSymbolName = `mosquito-cache-${version}`
 const CacheSymbol = Symbol.for(cacheSymbolName)
 
-import { ServiceProvider } from './ServiceProvider'
+import { ServiceProvider,  } from './ServiceProvider'
+import type { BuilderFunction } from './ServiceProvider'
 
-function getCache() {
+type Closure = () => void
+type Cache = Map<string, Object>
+function getCache(): Cache {
 	if (global[CacheSymbol] == null) {
 		global[CacheSymbol] = new Map()
 	}
@@ -57,7 +60,7 @@ function resolveLibrary(descriptor: Provider) {
 	return require(descriptor.resolver)
 }
 
-class Container {
+export class Container {
 	resolutions: Map<string, Provider>
 	whitelist: string[]
 	contexts: Map<string, Container>
@@ -68,33 +71,38 @@ class Container {
 		this.contexts = new Map()
 	}
 
-	get cache() {
+	get cache(): Cache {
 		return getCache()
 	}
 
-	getInjectionProxy(injectables) {
+	getInjectionProxy(injectables: Array<?string>) {
 		let context = this
 		return {
-			get(target, prop) {
+			get(target: Class<*>, prop: string) {
 				if (prop === '$$_Mosquito') {
 					return true
 				} else {
 					return Reflect.get(target, prop)
 				}
 			},
-			construct: (function(boundContainer: Container, target, params) {
+			construct: (function(boundContainer: Container, target: Class<*>, params: any[]) {
 				let container = boundContainer
 				if (target.$$_Run_In_Instantiated_Context) {
 					container = container.getContextualised(((target.$$_Run_In_Instantiated_Context: any): string))
-					if (container == null) container = boundContainer // revert that shit
 				}
-				const injections = injectables.map(container.make.bind(container))
+				let injections = []
+				if (container == null) {
+					injections = injectables.map(p => p == null ? null : boundContainer.make(p))
+				} else {
+					// $FlowFixMe Flow things container might be null here...it really isn't
+					injections = injectables.map(p => p == null ? null : container.make(p))
+				}
 				return new target(...(params.concat(injections)))
 			}).bind(null, context)
 		}
 	}
 
-	get make() {
+	get make(): (ident: string) => any {
 		return (ident: string) => {
 			const resolution = this.resolutions.get(ident)
 			if (resolution == null) {
@@ -125,7 +133,7 @@ class Container {
 		this.whitelist = Array.from(new Set(this.whitelist.concat(module)))
 	}
 
-	register(key, provider) {
+	register(key: string, provider: Provider) {
 		this.resolutions.set(key, provider)
 	}
 
@@ -142,7 +150,12 @@ class Container {
 		return this.contexts.get(id)
 	}
 
-	resolveInContext(clazz, bindings, run) {
+	bind<T: Class<*>>(clazz: T, resolutions: Array<?string> = []): T {
+		// $FlowFixMe Flow need not know about the proxy, only that it is (in terms of spec) the same type as T
+		return new Proxy(clazz, this.getInjectionProxy(resolutions))
+	}
+
+	resolveInContext(clazz: Class<*>, bindings: BuilderFunction, run: Closure) {
 		const contextId = uuid.v4()
 		clazz.$$_Run_In_Instantiated_Context = contextId
 

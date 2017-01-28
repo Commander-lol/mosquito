@@ -74,7 +74,7 @@ const provider = new ServiceProvider
 
 This provides the contract for easily registering dependancies with the container. To kick start the process, you'll need to call the `#register` method, and provide it with a function that accepts a `ProviderBuilder`
 
-The provider builder itself only exposes one method, `with`, which defines the name of the dependancy. It then returns a set of helpers, each of which provides a different type of object when the dependancy is resolved.
+The provider builder itself only exposes one method, `when`, which defines the name of the dependancy. It then returns a set of helpers, each of which provides a different type of object when the dependancy is resolved.
 
 helper | takes | provides
 -------|-------|-----

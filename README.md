@@ -17,33 +17,55 @@ or your favourite alternative installation method such as `ied install -S mosqui
 
 ## Usage
 
-Using mosquito directy is fairly simple, but will likely be abstracted away by some framework you're using. There is one component that you'll commonly use, and one that might get used occasionally (or not at all in many cases).
+Using mosquito is incredibly simple. By annotating the properties of your constructor with [flow](https://flowtype.org/) types, mosquito will automatially provide as a parameter the specific object that has been registered in the container under that name. 
 
-The basic pattern is delcaring your dependancies as parameters to the constructor of a class. The Container will then provide those dependancies via resolutions when the class is constructed. 
+The name resolution process is described below, but the basic gist is that any objects, functions or classes you've created in your code that you want to be injected have to be registered with the container via a `ServiceProvider`. 
+
+Injecting node builtins and npm packages comes free, but you may need to register an alias for a libaray if its name is not a valid js identifier
 
 ```js
-const { Container, ServiceProvider } = require('mosquito')
-const provider = new ServiceProvider
-
-class MyRepoImplementation {
-	constructor(ThatStringINeed) {
-		this.myStringThing = ThatStringINeed
+// myfile.js
+// Somewhat contrived example
+class MyController {
+	constructor(repo: MyRepository, moment: moment) {
+		this.repo = repo
+		this.moment = moment
 	}
 }
 
-provider.register((app) => {
-	app.when('MyRepo').singleton(MyRepoImplementation)
-	app.when('ThatStringINeed').object('This is that string')
+class MyRepository {
+	constructor(db: Database) {
+		this.db = db
+	}
+}
+
+module.exports = {
+	MyController,
+	MyRepository,
+}
+```
+```js
+// app.js
+// Application entry point that initialises the container
+const { ServiceProvider } = require('mosquito')
+const repoProvider = new ServiceProvider()
+
+const { MyRepository, MyController } = require('./myfile')
+repoProvider.when('MyRepository').singleton(MyRepository)
+repoProvider.when('Database').resultOf(function() {
+	return something_that_gets_a_db_connection()
 })
 
-// You normally wont use `Container#make`, but it's good for examples
-const repo = Container.make('MyRepoImplementation')
-console.log(repo.myStringThing) // Outputs: "This is that string"
+// usually this happens elsewhere in the codebase
+const controller = new MyController()
+// typeof controller.repo is 'MyRepository'
+// typeof controller.moment is the result of `require('moment')`
+// typeof controller.repo.db is whatever was returned by `#something_that_gets_a_db_connection()`
 ```
 
 ### Service Provider
 
-The Service Provider is where you'll be doing all of the work. It's the easiest way to register resolutions with the container, through a series of helper functions. To start, you'll need to import the ServiceProvider object, and create a new one (don't worry, no parameters):
+The Service Provider is where you'll be doing a fair whack of the work. It's the easiest way to register resolutions with the container, through a series of helper functions. To start, you'll need to import the ServiceProvider object, and create a new one (don't worry, no parameters):
 
 ```js
 const { ServiceProvider } = require('mosquito')
@@ -61,6 +83,7 @@ helper | takes | provides
 `#object` | Any object | The passed in object
 `#copyOf` | Any object | A copy of the passed in object, created with `lodash.deepclone`
 `#resultOf` | A function | The return value of invoking the given function, which is invoked when a dependee is instantiated
+`#library` | A string | Returns the result of `require` being called with the provided string. This is also the fallback behaviour for unregistered injections, and so generally only needs to be used to shadow one installed module with another one (e.g. hinting for `fs` but injecting a package such as `fs-extra`)
 
 An example of registering a singleton class and, essentially, an app-level constant:
 
@@ -69,20 +92,4 @@ provider.register((app) => {
 	app.when('MyRepo').singleton(MyRepoImplementation)
 	app.when('ThatStringINeed').object('This is that string')
 })
-```
-
-The `ServiceProvider` can also be used to create injected classes that won't be provided by the container - for example, provided by a framework. This is done through the static `provide` method, which intercepts the constructor and provides the dependancies to the class.
-
-```js
-const Foo = ServiceProvider.provide(class Bar {
-	constructor(MyRepo) {
-		this.MyRepo = MyRepo
-	}
-	
-	func() {
-		console.log(this.MyRepo)
-	}
-})
-
-new Foo // contains an instance of MyRepoImplementation as declared in the provider
 ```

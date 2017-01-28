@@ -1,6 +1,6 @@
 {
   "name": "mosquito",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Dependency Injection that just works",
   "main": "lib/index.js",
   "scripts": {

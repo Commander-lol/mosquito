@@ -1,5 +1,7 @@
 # Mosquito
 
+[![Build Status](https://travis-ci.org/Commander-lol/mosquito.svg?branch=master)](https://travis-ci.org/Commander-lol/mosquito)
+
 (( These docs are still being written, if there's anything you need to know as a priority, open an issue and I'll get right on it ))
 
 Dependency Injection that doesn't need any fanagle or weirdness. Simply put: Define what the container should provide when a constructor declares a certain parameter, and...well, that's it really.

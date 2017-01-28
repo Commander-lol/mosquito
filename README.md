@@ -1,6 +1,6 @@
 # Mosquito
 
-[![Build Status](https://travis-ci.org/Commander-lol/mosquito.svg?branch=master)](https://travis-ci.org/Commander-lol/mosquito)
+[![Build Status](https://travis-ci.org/Commander-lol/mosquito.svg?branch=develop)](https://travis-ci.org/Commander-lol/mosquito)
 
 (( These docs are still being written, if there's anything you need to know as a priority, open an issue and I'll get right on it ))
 

@@ -42,9 +42,9 @@ describe('The container', () => {
 
 			const A = Container.bind(class {
 				constructor(a, b, c) {
-					assert(a === 12)
-					assert(b === 'Hi')
-					assert(c === provision)
+					assert(a === provision)
+					assert(b === 12)
+					assert(c === 'Hi')
 				}
 			}, ['first'])
 
@@ -132,7 +132,7 @@ describe('In Scope', () => {
 			provider.register(app => app.when('wongle').object('This is the parent'))
 
 			const A = Container.bind(class {
-				constructor(inContext, a) {
+				constructor(a, inContext) {
 					if (inContext) {
 						assert(a === 'This is the child')
 					} else {

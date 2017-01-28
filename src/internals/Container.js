@@ -97,7 +97,14 @@ export class Container {
 					// $FlowFixMe Flow things container might be null here...it really isn't
 					injections = injectables.map(p => p == null ? null : container.make(p))
 				}
-				return new target(...(params.concat(injections)))
+
+				const paramCopy = Array.from(params)
+				const finalParams = injections // Interleave user provided params with resolutions, then append the remainder
+					.map(provided => provided != null ? provided : paramCopy.shift())
+					.filter(provided => provided != null)
+					.concat(paramCopy)
+
+				return new target(...finalParams)
 			}).bind(null, context)
 		}
 	}
